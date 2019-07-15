@@ -14,10 +14,15 @@ public enum GameWindow
 }
 
 public class UIManager : MonoBehaviour
-{
-    public TextMeshProUGUI yourTurnText;
+{    
+    public TextMeshProUGUI youText;
+    public TextMeshProUGUI oponentText;
+    public Color turnColor;
+    public Color waitColor; 
+
     public TextMeshProUGUI timerText;
-    public TextMeshProUGUI roundText;
+    public TextMeshProUGUI oponentTimerText; 
+
     public TextMeshProUGUI winOrLoseText;
 
     public GameObject _gamePlayWindow;
@@ -84,28 +89,30 @@ public class UIManager : MonoBehaviour
     {
         if (winner)
         {
-            winOrLoseText.text = "Winner :D";
+            winOrLoseText.text = "You are the winner";
         }
         else
         {
-            winOrLoseText.text = "Looser :(";
+            winOrLoseText.text = "You are the loser";
         }
     }
 
     public void UpdateRounds()
     {
-        roundText.text = (matchManager.currentRound + 1).ToString();
+        //roundText.text = (matchManager.currentRound + 1).ToString();
     }
 
     public void AddaptTurnText(bool isTurn)
     {
         if (isTurn)
         {
-            yourTurnText.color = new Color(1, 0, 0);
+            youText.color = turnColor;
+            oponentText.color = waitColor; 
         }
         else
         {
-            yourTurnText.color = new Color(0.1f, 0.1f, 0.1f);
+            youText.color = waitColor;
+            oponentText.color = turnColor;
         }
     }
 
