@@ -17,6 +17,7 @@ enum playerState
 public class PlayerLogic : MonoBehaviour
 {
     public GameObject playerCirclePrefab;
+    public MatchManager _matchManager; 
 
     private GameObject circleInScreen;
 
@@ -27,6 +28,8 @@ public class PlayerLogic : MonoBehaviour
     private playerState _playerState;
 
     private float seekTimer = 0;
+    private float oponentSeekTimer = 0; 
+
     private bool isSeeking = false;
 
     private bool isPlayTime = true;
@@ -39,15 +42,12 @@ public class PlayerLogic : MonoBehaviour
     //Oponent
     private float oponentTime = 0; 
 
-    public MatchManager matchManager;
-
     private void Awake()
     {
         photonView = PhotonRoom.Instance.photonView;
         PlayerRPCCalls.Instance.InitPV(this);
         _playerInfo = GetComponent<PlayerInfo>();
-        matchManager = GameObject.FindGameObjectWithTag("MatchManager").GetComponent<MatchManager>();
-        matchManager._playerInfo = _playerInfo; 
+        _matchManager._playerInfo = _playerInfo; 
 
         if (_playerInfo.isMyTurn)
             _playerState = playerState.WaitingToSpawnPoint;
@@ -59,7 +59,6 @@ public class PlayerLogic : MonoBehaviour
     {
         if (_playerState != playerState.GameOver)
         {
-
             ManagePlayTime();
 
             if (!isPlayTime)
@@ -93,7 +92,7 @@ public class PlayerLogic : MonoBehaviour
         if (isSeeking)
         {
             seekTimer += Time.deltaTime;
-            UIManager.Instance.AddaptTimer(seekTimer);
+            UIManager.Instance.AddaptTimer(seekTimer, oponentSeekTimer);
         }
     }
 
@@ -106,6 +105,12 @@ public class PlayerLogic : MonoBehaviour
             circleInScreen.transform.position = new Vector3(spawnPosition.x, spawnPosition.y, 0);
             PlayerRPCCalls.Instance.SendRPCCall(PlayerRPCCall.CircleSpawned, spawnPosition);
             _playerState = playerState.PointSpawned;
+        }
+
+        if(_playerState == playerState.PointSpawned)
+        {
+            oponentSeekTimer += Time.deltaTime;
+            UIManager.Instance.AddaptTimer(seekTimer, oponentSeekTimer);
         }
     }
 

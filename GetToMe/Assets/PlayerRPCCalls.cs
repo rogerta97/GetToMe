@@ -114,7 +114,7 @@ public class PlayerRPCCalls : MonoBehaviour
     [PunRPC]
     private void RPC_AdvanceRound()
     {
-        _playerLogic.matchManager.AdvanceRound();
+        _playerLogic._matchManager.AdvanceRound();
     }
 
     [PunRPC]

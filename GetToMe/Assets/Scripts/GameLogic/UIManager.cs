@@ -4,6 +4,7 @@ using UnityEngine;
 using TMPro;
 using System;
 using Photon.Pun;
+using UnityEngine.UI;
 
 public enum GameWindow
 {
@@ -21,7 +22,10 @@ public class UIManager : MonoBehaviour
     public Color waitColor; 
 
     public TextMeshProUGUI timerText;
-    public TextMeshProUGUI oponentTimerText; 
+    public TextMeshProUGUI oponentTimerText;
+
+    public GameObject roundSticksHolder;
+    private Image[] roundStickImages; 
 
     public TextMeshProUGUI winOrLoseText;
 
@@ -29,14 +33,12 @@ public class UIManager : MonoBehaviour
     public GameObject _gameOverWindow;
     public GameObject _spinwheelWindow;
 
-    private MatchManager matchManager;
+    public MatchManager matchManager;
 
     public static UIManager Instance;
 
     private void Awake()
-    {
-        matchManager = GameObject.FindGameObjectWithTag("MatchManager").GetComponent<MatchManager>();
-
+    {      
         if (UIManager.Instance == null)
         {
             UIManager.Instance = this;
@@ -48,6 +50,10 @@ public class UIManager : MonoBehaviour
                 Destroy(this.gameObject);
             }
         }
+
+        roundStickImages = new Image[roundSticksHolder.transform.childCount]; 
+        for (int i = 0; i < roundSticksHolder.transform.childCount; i++)       
+            roundStickImages[i] = roundSticksHolder.transform.GetChild(i).GetComponent<Image>();               
     }
 
     public void OnGameOver(bool isWinner)
@@ -99,7 +105,13 @@ public class UIManager : MonoBehaviour
 
     public void UpdateRounds()
     {
-        //roundText.text = (matchManager.currentRound + 1).ToString();
+        for (int i = 0; i < roundStickImages.Length; i++)
+        {
+            if (i < matchManager.currentRound)
+                roundStickImages[i].color = turnColor;
+            else
+                roundStickImages[i].color = waitColor;
+        }        
     }
 
     public void AddaptTurnText(bool isTurn)
@@ -116,9 +128,10 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void AddaptTimer(float secondsInSeek)
+    public void AddaptTimer(float secondsInSeek, float oponentSecondsInSeek)
     {
         timerText.text = secondsInSeek.ToString("n2");
+        oponentTimerText.text = oponentSecondsInSeek.ToString("n2");
     }
 
     // Start is called before the first frame update
