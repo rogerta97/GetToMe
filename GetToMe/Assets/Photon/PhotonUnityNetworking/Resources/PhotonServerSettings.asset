@@ -35,5 +35,13 @@ MonoBehaviour:
   - RPC_SendPosition
   - RPC_MatchBegin
   - RPC_OnOponentSpawnedCircle
+  - RPC_OnOponentCatchedCircle
+  - RPC_OnCircleCatched
+  - RPC_OnNextTurn
+  - RPC_AdvanceRound
+  - RPC_OnGameOver
+  - RPC_SendTimeToOponent
+  - RPC_OnSpinWheel
+  - RPC_OnOponentSpinWheelRequest
   DisableAutoOpenWizard: 1
   ShowSettings: 1

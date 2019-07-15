@@ -6,7 +6,8 @@ using Photon.Pun;
 public class PlayerInfo : MonoBehaviour
 {
     [HideInInspector] public bool isHost = false;
-    [HideInInspector] public bool isMyTurn = false; 
+    [HideInInspector] public bool isMyTurn = false;
+    [HideInInspector] public bool isWinner = false;
 
     // Start is called before the first frame update
     void Awake()

@@ -5,12 +5,20 @@ using Photon.Pun;
 
 public enum PlayerRPCCall
 {
-    CircleSpawned
+    CircleSpawned,
+    CircleCatched,
+    NextTurn,
+    SendTime, 
+    GameOver, 
+    OponentSpinWheelRequest, 
+    SpinWheel,
 }
 
 public class PlayerRPCCalls : MonoBehaviour
 {
     public static PlayerRPCCalls Instance;
+    [HideInInspector] public PlayerLogic _playerLogic;
+    [HideInInspector] public MatchManager _matchManager;
     PhotonView PV;
 
     private void Awake()
@@ -34,6 +42,7 @@ public class PlayerRPCCalls : MonoBehaviour
     public void InitPV(PlayerLogic playerLogic)
     {
         PV = PhotonRoom.Instance.photonView;
+        _playerLogic = playerLogic; 
     }
 
     public void SendRPCCall(PlayerRPCCall callType, params object[] args)
@@ -41,15 +50,77 @@ public class PlayerRPCCalls : MonoBehaviour
         switch (callType)
         {
             case PlayerRPCCall.CircleSpawned:
-                PV.RPC("RPC_OnOponentSpawnedCircle", RpcTarget.All, args); 
-                break; 
+                PV.RPC("RPC_OnOponentSpawnedCircle", RpcTarget.Others, args); 
+                break;
+
+            case PlayerRPCCall.SendTime:
+                PV.RPC("RPC_SendTimeToOponent", RpcTarget.Others, args);
+                break;
+
+
+            case PlayerRPCCall.OponentSpinWheelRequest:
+                PV.RPC("RPC_OnOponentSpinWheelRequest", RpcTarget.Others);
+                break;
+
+            case PlayerRPCCall.CircleCatched:
+                PV.RPC("RPC_OnCircleCatched", RpcTarget.All);
+                break;
+
+            case PlayerRPCCall.NextTurn:
+                PV.RPC("RPC_AdvanceRound", RpcTarget.All);
+                break;
+
+            case PlayerRPCCall.GameOver:
+                PV.RPC("RPC_OnGameOver", RpcTarget.All);
+                break;
+
+            case PlayerRPCCall.SpinWheel:
+                PV.RPC("RPC_OnSpinWheel", RpcTarget.All);
+                break;
+
         }
     }
 
     [PunRPC]
     private void RPC_OnOponentSpawnedCircle(Vector3 pressedPos)
     {
-        GameController.Instance._playerLogic.OnOponentPressed(pressedPos); 
+        _playerLogic.OnOponentSpawnCircle(pressedPos); 
+    }
+
+    [PunRPC]
+    private void RPC_OnOponentSpinWheelRequest()
+    {
+        _matchManager.OponentRequestedSpinWheel(); 
+    }
+
+    [PunRPC]
+    private void RPC_SendTimeToOponent(float finalOponentTime)
+    {
+        _playerLogic.OnOponentRecieveTime(finalOponentTime);
+    }
+
+    [PunRPC]
+    private void RPC_OnGameOver()
+    {
+        _playerLogic.OnGameOver();
+    }
+
+    [PunRPC]
+    private void RPC_OnSpinWheel()
+    {
+        _matchManager.TransitToSpinWheel(); 
+    }
+
+    [PunRPC]
+    private void RPC_AdvanceRound()
+    {
+        _playerLogic.matchManager.AdvanceRound();
+    }
+
+    [PunRPC]
+    private void RPC_OnCircleCatched()
+    {
+        _playerLogic.OnCircleCatched();
     }
 
     // Start is called before the first frame update

@@ -49,8 +49,7 @@ public class PhotonRoom : MonoBehaviourPunCallbacks, IInRoomCallbacks
         infoText.text = "Joined to a room. Waiting for players (" + ammountPlayersInRoom + " of " + MultiplayerSetting.Instance.m_MaxPlayers + ")";
 
         if (MultiplayerSetting.Instance.delayStart)
-        {
-             
+        {           
             if(ammountPlayersInRoom == MultiplayerSetting.Instance.m_MaxPlayers)
             {
                 timeToStartTimer = 0;
