@@ -5,13 +5,20 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Sentences", menuName = "Model/Sentences")]
 public class EndGameActionsData : ScriptableObject
 {
+    private int lastID = 0; 
+
     [SerializeField]
-    public List<string> ActionSentencesList; 
+    public List<string> ActionSentencesList;
+
+    public int GetLastSentenceID()
+    {
+        return lastID; 
+    }
 
     public string GetRandomSentence()
     {
         int sentenceAmount = ActionSentencesList.Count;
-        int sentenceSelected = Random.Range(0, sentenceAmount - 1);
-        return ActionSentencesList[sentenceSelected];        
+        lastID = Random.Range(0, sentenceAmount - 1);
+        return ActionSentencesList[lastID];        
     }
 }

@@ -43,5 +43,9 @@ MonoBehaviour:
   - RPC_SendTimeToOponent
   - RPC_OnSpinWheel
   - RPC_OnOponentSpinWheelRequest
+  - RPC_OnSendActionToOponent
+  - RPC_OnRematchRequest
+  - RPC_OnRematch
+  - RPC_OnReadyToRematch
   DisableAutoOpenWizard: 1
   ShowSettings: 1

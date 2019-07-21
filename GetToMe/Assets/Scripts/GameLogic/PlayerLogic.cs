@@ -11,6 +11,7 @@ enum playerState
     SwapTurns,
     WaitingToSpawnPoint,
     PointSpawned,
+    CircleCatched, 
     GameOver,
 }
 
@@ -22,6 +23,7 @@ public class PlayerLogic : MonoBehaviour
     private GameObject circleInScreen;
 
     private PlayerInfo _playerInfo;
+    public SpinWheelWindowController spinWheelController; 
     private PlayerRPCCalls playerRPCCalls;
     private PhotonView photonView;
 
@@ -36,11 +38,11 @@ public class PlayerLogic : MonoBehaviour
 
     private bool changeTurn = false;
     private float swapTurnTimer = 0; 
-    private float waitForTurn = 1.0f;
+    private float waitForTurn = 0.3f;
     private int turnsPassed = 0;
 
     //Oponent
-    private float oponentTime = 0; 
+    private float finalOponentTime = 0; 
 
     private void Awake()
     {
@@ -68,8 +70,33 @@ public class PlayerLogic : MonoBehaviour
                 PlayTurnLogic();
             else
                 PlayWaitLogic();
-
         }
+    }
+
+    public IEnumerator Rematch()
+    {
+        //Interpolations
+        spinWheelController.AnimateEndUI();
+        yield return new WaitForSeconds(0.2f); 
+
+        UIManager.Instance.ShowWindow(GameWindow.GamePlay);
+
+        // Reset match manager
+        _matchManager.currentRound = 0;
+
+        // Reset Player Data
+        seekTimer = oponentSeekTimer = 0;
+        spinWheelController._rematchRequestReceived = false; 
+        _playerInfo.ResetData();
+
+        if (_playerInfo.isMyTurn)
+            _playerState = playerState.WaitingToSpawnPoint;
+        else
+            _playerState = playerState.WaitingToSeek;
+
+        //Addapt UI
+        UIManager.Instance.UpdateGamePlayUI(_playerInfo.isMyTurn);
+        UIManager.Instance.AnimateBottomBar(); 
     }
 
     private void ManagePlayTime()
@@ -92,7 +119,7 @@ public class PlayerLogic : MonoBehaviour
         if (isSeeking)
         {
             seekTimer += Time.deltaTime;
-            UIManager.Instance.AddaptTimer(seekTimer, oponentSeekTimer);
+            UIManager.Instance.UpdateSeekTimers(seekTimer, oponentSeekTimer, false);
         }
     }
 
@@ -110,47 +137,57 @@ public class PlayerLogic : MonoBehaviour
         if(_playerState == playerState.PointSpawned)
         {
             oponentSeekTimer += Time.deltaTime;
-            UIManager.Instance.AddaptTimer(seekTimer, oponentSeekTimer);
+            UIManager.Instance.UpdateSeekTimers(seekTimer, oponentSeekTimer, false);
         }
     }
 
     public void OnCirclePressed()
     {
         if(_playerState == playerState.Seeking)
-            PlayerRPCCalls.Instance.SendRPCCall(PlayerRPCCall.CircleCatched);
+        {
+            _playerState = playerState.CircleCatched; 
+            PlayerRPCCalls.Instance.SendRPCCall(PlayerRPCCall.CircleCatched, seekTimer);
+        }         
     }
 
     public void OnGameOver()
     {
         _playerState = playerState.GameOver;
-        PlayerRPCCalls.Instance.SendRPCCall(PlayerRPCCall.SendTime, seekTimer);       
+        PlayerRPCCalls.Instance.SendRPCCall(PlayerRPCCall.SendTime, seekTimer);
     }
 
     public void OnOponentRecieveTime(float oponentTime)
     {
-        this.oponentTime = oponentTime;
+        this.finalOponentTime = oponentTime;
         _playerInfo.isWinner = false;
 
-        if (oponentTime > seekTimer)
+        if (seekTimer < oponentTime)
             _playerInfo.isWinner = true;
 
         UIManager.Instance.OnGameOver(_playerInfo.isWinner);
+        UIManager.Instance.UpdateSeekTimers(seekTimer, oponentTime, true);
+      
     }
 
-    public void OnCircleCatched()
+    public void OnCircleCatched(float oponentSeekTime)
     {
         if (isSeeking)
             isSeeking = false;
+
+        _playerInfo.isMyTurn = !_playerInfo.isMyTurn;
+        changeTurn = true;
+        isPlayTime = false;
+
+        if(!_playerInfo.isMyTurn)
+            oponentSeekTimer = oponentSeekTime;
+
+        UIManager.Instance.UpdateSeekTimers(seekTimer, oponentSeekTimer, false);
+        UIManager.Instance.UpdateTurnTextColor(_playerInfo.isMyTurn);
 
         if (_playerInfo.isHost) {
             if(turnsPassed != 0 && turnsPassed % 2 != 0)
                 PlayerRPCCalls.Instance.SendRPCCall(PlayerRPCCall.NextTurn);
         }
-
-        _playerInfo.isMyTurn = !_playerInfo.isMyTurn;
-        changeTurn = true;
-        isPlayTime = false;
-        UIManager.Instance.AddaptTurnText(_playerInfo.isMyTurn);
 
         CleanScreen();
     }
@@ -167,6 +204,8 @@ public class PlayerLogic : MonoBehaviour
         _playerState = playerState.Seeking; 
         circleInScreen = Instantiate(playerCirclePrefab);
         circleInScreen.transform.position = new Vector3(pressedPoint.x, pressedPoint.y, 0);
+
+        AudioManager.Instance.PlayAudioClip(AudioClipTrack.CircleSpawned); 
 
         isSeeking = true; 
     }

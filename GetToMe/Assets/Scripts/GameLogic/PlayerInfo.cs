@@ -25,6 +25,16 @@ public class PlayerInfo : MonoBehaviour
         
     }
 
+    public void ResetData()
+    {
+        isWinner = false;
+
+        if (isHost)
+            isMyTurn = true;
+        else
+            isMyTurn = false; 
+    }
+
     public bool IsHost()
     {
         return isHost;

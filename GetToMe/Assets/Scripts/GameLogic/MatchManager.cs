@@ -10,13 +10,14 @@ public class MatchManager : MonoBehaviour
     [HideInInspector] public int currentRound = 0;
 
     [SerializeField] private Button spinwheelButton;
-    private bool oponentRequestedSpinWheel; 
+    private bool oponentRequestedSpinWheel;
 
+    public GameOverWindowAnimationController gameOverWindowAnimationController;
     public PlayerInfo _playerInfo; 
 
     public void TransitToSpinWheel()
     {
-        UIManager.Instance.ShowWindow(GameWindow.SpinWheel); 
+        StartCoroutine(gameOverWindowAnimationController.ReverseUIAnimation()); 
     }
 
     public void OponentRequestedSpinWheel()
@@ -32,7 +33,7 @@ public class MatchManager : MonoBehaviour
         } else
         {
             TextMeshProUGUI buttonText = spinwheelButton.gameObject.GetComponentInChildren<TextMeshProUGUI>();
-            buttonText.text = "Waiting oponent request...";
+            buttonText.text = "Waiting oponent";
             PlayerRPCCalls.Instance.SendRPCCall(PlayerRPCCall.OponentSpinWheelRequest); 
         } 
     }
@@ -59,7 +60,7 @@ public class MatchManager : MonoBehaviour
     {
         PlayerRPCCalls.Instance._matchManager = this; 
         UIManager.Instance.UpdateRounds();
-        UIManager.Instance.AddaptTurnText(_playerInfo.isMyTurn);
+        UIManager.Instance.UpdateTurnTextColor(_playerInfo.isMyTurn);
     }
 
     // Update is called once per frame

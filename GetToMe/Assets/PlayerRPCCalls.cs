@@ -12,6 +12,10 @@ public enum PlayerRPCCall
     GameOver, 
     OponentSpinWheelRequest, 
     SpinWheel,
+    SendAction, 
+    ReadyToRematch, 
+    RematchRequest, 
+    Rematch, 
 }
 
 public class PlayerRPCCalls : MonoBehaviour
@@ -19,6 +23,7 @@ public class PlayerRPCCalls : MonoBehaviour
     public static PlayerRPCCalls Instance;
     [HideInInspector] public PlayerLogic _playerLogic;
     [HideInInspector] public MatchManager _matchManager;
+    [HideInInspector] public SpinWheelWindowController _spinWheelController;
     PhotonView PV;
 
     private void Awake()
@@ -57,13 +62,20 @@ public class PlayerRPCCalls : MonoBehaviour
                 PV.RPC("RPC_SendTimeToOponent", RpcTarget.Others, args);
                 break;
 
-
             case PlayerRPCCall.OponentSpinWheelRequest:
                 PV.RPC("RPC_OnOponentSpinWheelRequest", RpcTarget.Others);
                 break;
 
+            case PlayerRPCCall.SendAction:
+                PV.RPC("RPC_OnSendActionToOponent", RpcTarget.Others, args);
+                break;
+
+            case PlayerRPCCall.RematchRequest:
+                PV.RPC("RPC_OnRematchRequest", RpcTarget.Others);
+                break;
+
             case PlayerRPCCall.CircleCatched:
-                PV.RPC("RPC_OnCircleCatched", RpcTarget.All);
+                PV.RPC("RPC_OnCircleCatched", RpcTarget.All, args);
                 break;
 
             case PlayerRPCCall.NextTurn:
@@ -78,6 +90,14 @@ public class PlayerRPCCalls : MonoBehaviour
                 PV.RPC("RPC_OnSpinWheel", RpcTarget.All);
                 break;
 
+            case PlayerRPCCall.Rematch:
+                PV.RPC("RPC_OnRematch", RpcTarget.All);
+                break;
+
+            case PlayerRPCCall.ReadyToRematch:
+                PV.RPC("RPC_OnReadyToRematch", RpcTarget.All);
+                break;
+
         }
     }
 
@@ -85,6 +105,12 @@ public class PlayerRPCCalls : MonoBehaviour
     private void RPC_OnOponentSpawnedCircle(Vector3 pressedPos)
     {
         _playerLogic.OnOponentSpawnCircle(pressedPos); 
+    }
+
+    [PunRPC]
+    private void RPC_OnReadyToRematch()
+    {
+        _spinWheelController.SwapRollActionToRematch();
     }
 
     [PunRPC]
@@ -97,6 +123,12 @@ public class PlayerRPCCalls : MonoBehaviour
     private void RPC_SendTimeToOponent(float finalOponentTime)
     {
         _playerLogic.OnOponentRecieveTime(finalOponentTime);
+    }
+
+    [PunRPC]
+    private void RPC_OnSendActionToOponent(int actionIndex)
+    {
+        UIManager.Instance.UpdateActionText(actionIndex); 
     }
 
     [PunRPC]
@@ -118,10 +150,24 @@ public class PlayerRPCCalls : MonoBehaviour
     }
 
     [PunRPC]
-    private void RPC_OnCircleCatched()
+    private void RPC_OnRematchRequest()
     {
-        _playerLogic.OnCircleCatched();
+        UIManager.Instance.spinWheelController.OnRematchRequestReceived();
     }
+
+    [PunRPC]
+    private void RPC_OnRematch()
+    {
+        StartCoroutine(_playerLogic.Rematch()); 
+    }
+
+    [PunRPC]
+    private void RPC_OnCircleCatched(float oponentSeekTime)
+    {
+        _playerLogic.OnCircleCatched(oponentSeekTime);
+    }
+
+ 
 
     // Start is called before the first frame update
     void Start()

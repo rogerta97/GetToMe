@@ -4,6 +4,7 @@ using UnityEngine;
 using TMPro;
 using System;
 using Photon.Pun;
+using DG.Tweening; 
 using UnityEngine.UI;
 
 public enum GameWindow
@@ -15,24 +16,45 @@ public enum GameWindow
 }
 
 public class UIManager : MonoBehaviour
-{    
+{
+    [Header("GamePlay Window")]
+    public GameObject bottomBar;
+    public GameObject bottomBarPosition;
     public TextMeshProUGUI youText;
-    public TextMeshProUGUI oponentText;
-    public Color turnColor;
-    public Color waitColor; 
-
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI oponentTimerText;
-
+    public TextMeshProUGUI oponentText;
     public GameObject roundSticksHolder;
-    private Image[] roundStickImages; 
+    private bool transitToGameOver;
+    Tween botomBarTween;
+    private Vector3 initBottomBarPosition;
 
+
+    [Header("GameOver Window")]
+    public TextMeshProUGUI finalYouText;
+    public TextMeshProUGUI finalOponentText;
+    public TextMeshProUGUI finalSeekTimer;
+    public TextMeshProUGUI finalOponentSeekTimer;
+    public TextMeshProUGUI GoText;
     public TextMeshProUGUI winOrLoseText;
+
+    [Header("SpinWheel")]
+    public Image actionBackground;
+    public TextMeshProUGUI rematchText;
+    public SpinWheelWindowController spinWheelController; 
+
+    [Header("GameColors")]
+    public Color blueColor;
+    public Color greenColor;
+    public Color greenTextColor;
+    public Color whiteColor;
+    public Color redColor;
 
     public GameObject _gamePlayWindow;
     public GameObject _gameOverWindow;
     public GameObject _spinwheelWindow;
 
+    private Image[] roundStickImages; 
     public MatchManager matchManager;
 
     public static UIManager Instance;
@@ -53,13 +75,67 @@ public class UIManager : MonoBehaviour
 
         roundStickImages = new Image[roundSticksHolder.transform.childCount]; 
         for (int i = 0; i < roundSticksHolder.transform.childCount; i++)       
-            roundStickImages[i] = roundSticksHolder.transform.GetChild(i).GetComponent<Image>();               
+            roundStickImages[i] = roundSticksHolder.transform.GetChild(i).GetComponent<Image>();
+
+        initBottomBarPosition = bottomBar.transform.position;
+        AnimateBottomBar(); 
+    }
+
+    public void AnimateBottomBar()
+    {
+        botomBarTween = bottomBar.transform.DOMove(bottomBarPosition.transform.position, 1).SetEase(Ease.OutBounce);
     }
 
     public void OnGameOver(bool isWinner)
     {
-        ShowWindow(GameWindow.GameOver); 
+        StartCoroutine(GameOverCr(isWinner)); 
+    }
+
+    IEnumerator GameOverCr(bool isWinner)
+    {      
+        botomBarTween = bottomBar.transform.DOMove(initBottomBarPosition, 1).SetEase(Ease.OutBounce);
+        yield return botomBarTween.WaitForCompletion(); 
+
+        ShowWindow(GameWindow.GameOver);
+        //AudioManager.Instance.PlayAudioClip(AudioClipTrack.WinSound); 
+
+        SetGameOverWindowData(isWinner);
+        SetSpinWheelData(isWinner);
+    }
+
+    public void SetGameOverWindowData(bool isWinner)
+    {
         SetWinOrLoseText(isWinner);
+
+        if (isWinner)
+        {
+            finalYouText.color = blueColor;
+            finalOponentText.color = redColor;
+            GoText.color = blueColor;
+
+        } else
+        {
+            finalYouText.color = redColor;
+            finalOponentText.color = blueColor;
+            GoText.color = redColor; 
+        }
+    }
+
+    public void UpdateGamePlayUI(bool isMyTurn, float seekTimer = 0, float oponentSeekTimer = 0)
+    {
+        UpdateSeekTimers(seekTimer, oponentSeekTimer, false);
+        UpdateTurnTextColor(isMyTurn);
+        UpdateRounds(); 
+    }
+
+    public void UpdateActionText(int actionIndex)
+    {
+        spinWheelController.UpdateActionText(actionIndex); 
+    }
+
+    public void SetSpinWheelData(bool isWinner)
+    {
+        spinWheelController.AddaptWindow(isWinner);       
     }
 
     public void ShowWindow(GameWindow gameWindow)
@@ -95,11 +171,14 @@ public class UIManager : MonoBehaviour
     {
         if (winner)
         {
-            winOrLoseText.text = "You are the winner";
+            winOrLoseText.text = "WINNER";
+            winOrLoseText.color = blueColor; 
         }
         else
         {
-            winOrLoseText.text = "You are the loser";
+            winOrLoseText.text = "LOSER";
+            winOrLoseText.color = redColor;
+            
         }
     }
 
@@ -108,30 +187,40 @@ public class UIManager : MonoBehaviour
         for (int i = 0; i < roundStickImages.Length; i++)
         {
             if (i < matchManager.currentRound)
-                roundStickImages[i].color = turnColor;
+                roundStickImages[i].color = blueColor;
             else
-                roundStickImages[i].color = waitColor;
+                roundStickImages[i].color = whiteColor;
         }        
     }
 
-    public void AddaptTurnText(bool isTurn)
+    public void UpdateTurnTextColor(bool isTurn)
     {
         if (isTurn)
         {
-            youText.color = turnColor;
-            oponentText.color = waitColor; 
+            youText.color = blueColor;
+            oponentText.color = whiteColor; 
         }
         else
         {
-            youText.color = waitColor;
-            oponentText.color = turnColor;
+            youText.color = whiteColor;
+            oponentText.color = blueColor;
         }
     }
 
-    public void AddaptTimer(float secondsInSeek, float oponentSecondsInSeek)
+    public void UpdateSeekTimers(float secondsInSeek, float oponentSecondsInSeek, bool finalTimer)
     {
-        timerText.text = secondsInSeek.ToString("n2");
-        oponentTimerText.text = oponentSecondsInSeek.ToString("n2");
+        if (finalTimer)
+        {
+            finalSeekTimer.text = secondsInSeek.ToString("n2");
+            finalOponentSeekTimer.text = oponentSecondsInSeek.ToString("n2");
+
+        }
+        else
+        {
+            timerText.text = secondsInSeek.ToString("n2");
+            oponentTimerText.text = oponentSecondsInSeek.ToString("n2");
+        }
+
     }
 
     // Start is called before the first frame update

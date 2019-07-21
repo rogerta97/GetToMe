@@ -44,6 +44,7 @@ public class PhotonLobby : MonoBehaviourPunCallbacks
         battleButton.SetActive(false);
         cancelButton.SetActive(true);
 
+        AudioManager.Instance.PlayAudioClip(AudioClipTrack.ButtonClick); 
         PhotonNetwork.JoinRandomRoom();
     }
 
@@ -72,6 +73,7 @@ public class PhotonLobby : MonoBehaviourPunCallbacks
         cancelButton.SetActive(false);
         battleButton.SetActive(true);
 
+        AudioManager.Instance.PlayAudioClip(AudioClipTrack.ButtonClick); 
         PhotonNetwork.LeaveRoom();
     }
 
